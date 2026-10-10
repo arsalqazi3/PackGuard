@@ -1,0 +1,17 @@
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+node_modules/
+.claude/settings.local.json
+
+# data and models
+risk/data/raw/
+risk/models/*
+!risk/models/.gitkeep
+*.pkl
+*.joblib
+*.ubj
+*.onnx

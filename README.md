@@ -9,9 +9,10 @@ FYP-I scope: Core Guard (the gateway and its checks) and a first version of AI R
 | Folder | What it is | Owner |
 |---|---|---|
 | `gateway/` | FastAPI app that pip talks to | Arslan |
-| `core_guard/` | Package checks (exists, typosquat, metadata, baseline score) | Asad |
-| `risk/` | AI risk model (dataset, features, XGBoost) | Ammar |
+| `core_guard/` | Package checks (exists, typosquat, metadata, security, baseline score) | Asad |
+| `risk/` | AI risk model (evidence collection, dataset, features, XGBoost) | Ammar |
 | `db/` | Postgres schema | Arslan |
+| `docs/` | Threat model and project notes | Arslan |
 | `tests/` | Pytest tests | Everyone |
 
 ## Run locally
@@ -48,6 +49,16 @@ pip install --no-cache-dir --index-url http://localhost:8000/simple evil-test-pk
 ```bash
 pytest -q
 ```
+
+The database tests are skipped unless `TEST_DATABASE_URL` points at a throwaway Postgres. CI starts one for you. The tests empty its tables, so never point it at a real database.
+
+## How the gateway decides
+
+For every package the gateway runs the Core Guard checks (`exists`, `metadata`, `typosquat`, `security`), looks up AI hallucination evidence in the `evidence` table, and then takes the higher of `baseline_score` and the AI model score. A check that is not written yet is skipped and listed in `signals["not_implemented"]`, so each person can finish their part without breaking the gateway. The signal keys are listed in `gateway/contracts.py`.
+
+PyPI lookups are cached in the `packages` table for `PACKAGE_CACHE_TTL_HOURS` (default 24). Every decision is saved in the `decisions` table. Without `DATABASE_URL` the gateway still works and only logs decisions.
+
+The `/simple/` responses also carry `X-PackGuard-Decision` and `X-PackGuard-Score` headers. See `docs/threat-model.md` for what PackGuard does and does not protect against.
 
 ## The /evaluate contract
 

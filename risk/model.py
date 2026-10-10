@@ -16,7 +16,15 @@ Plan:
 
 
 def extract_features(signals: dict) -> dict:
-    """Turn Core Guard signals into a flat dict of numeric features."""
+    """Turn Core Guard signals into a flat dict of numeric features.
+
+    `signals` uses the keys listed in gateway/contracts.py. Feature ideas:
+    exists_on_pypi, package age in days, number of releases, has repository URL,
+    number of typosquat matches, known_malicious, number of vulnerabilities,
+    and from signals["hallucination_evidence"]: total count and the number of
+    distinct models (cross-model agreement, the AI-specific signal from the proposal).
+    Keep this the same for training and for live scoring.
+    """
     raise NotImplementedError
 
 

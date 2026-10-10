@@ -2,3 +2,4 @@ fastapi
 uvicorn[standard]
 httpx
 pydantic>=2,<3
+psycopg[binary,pool]>=3.2

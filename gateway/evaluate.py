@@ -114,20 +114,27 @@ def combine_score(signals: dict) -> float:
     return min(max(float(score), 0.0), 1.0)
 
 
+def _rule_reason(rule: str, signals: dict) -> str:
+    evidence = signals.get("hallucination_evidence") or {}
+    return {
+        "known_malicious": "listed as a known malicious package",
+        "not_on_pypi": "not found on PyPI",
+        "typosquat": "name is close to popular package: " + ", ".join(signals.get("typosquat_of") or []),
+        "hallucinated_multi_model": f"name seen in AI hallucination data ({len(evidence.get('models') or [])} models)",
+        "hallucinated": "name seen in AI hallucination data",
+        "new_package": f"first uploaded less than {checks.NEW_PACKAGE_DAYS} days ago",
+        "single_release": "only one release",
+        "no_repository": "no source repository linked",
+    }.get(rule, rule)
+
+
 def build_reasons(signals: dict) -> list[str]:
-    reasons = []
-    if signals.get("exists_on_pypi") is False:
-        reasons.append("not found on PyPI")
-    if signals.get("typosquat_of"):
-        reasons.append("name is close to popular package: " + ", ".join(signals["typosquat_of"]))
-    security = signals.get("security") or {}
-    if security.get("known_malicious"):
-        reasons.append("listed as a known malicious package")
-    if security.get("vulnerabilities"):
-        reasons.append(f"{len(security['vulnerabilities'])} known vulnerabilities")
-    evidence = signals.get("hallucination_evidence")
-    if evidence and evidence["count"]:
-        reasons.append(f"name seen in AI hallucination data ({len(evidence['models'])} models)")
+    # Same rules as core_guard.checks.baseline_score, so the reasons always
+    # match what the score was built from.
+    reasons = [_rule_reason(rule, signals) for rule in checks.baseline_rules(signals)]
+    vulns = (signals.get("security") or {}).get("vulnerabilities")
+    if vulns:
+        reasons.append(f"{len(vulns)} known vulnerabilities in some versions")
     for check in signals.get("errors", {}):
         reasons.append(f"{check} check failed")
     return reasons

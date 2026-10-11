@@ -56,6 +56,8 @@ The database tests are skipped unless `TEST_DATABASE_URL` points at a throwaway 
 
 For every package the gateway runs the Core Guard checks (`exists`, `metadata`, `typosquat`, `security`), looks up AI hallucination evidence in the `evidence` table, and then takes the higher of `baseline_score` and the AI model score. A check that is not written yet is skipped and listed in `signals["not_implemented"]`, so each person can finish their part without breaking the gateway. The signal keys are listed in `gateway/contracts.py`.
 
+Core Guard uses the PyPI JSON API, OSV (which includes the OpenSSF malicious-packages data) and the top 5000 PyPI packages in `core_guard/data/top_packages.txt`. Refresh that list with `python -m core_guard.update_top_packages`.
+
 PyPI lookups are cached in the `packages` table for `PACKAGE_CACHE_TTL_HOURS` (default 24). Every decision is saved in the `decisions` table. Without `DATABASE_URL` the gateway still works and only logs decisions.
 
 The `/simple/` responses also carry `X-PackGuard-Decision` and `X-PackGuard-Score` headers. See `docs/threat-model.md` for what PackGuard does and does not protect against.

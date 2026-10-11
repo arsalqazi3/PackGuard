@@ -104,10 +104,21 @@ def test_signals_and_reasons(monkeypatch):
         "count": 3, "models": ["gemini-2.5", "gpt-4"], "sources": ["gemini", "groq", "spracklen"]
     }
     assert result.reasons == [
+        "listed as a known malicious package",
         "not found on PyPI",
         "name is close to popular package: requests",
-        "listed as a known malicious package",
         "name seen in AI hallucination data (2 models)",
+    ]
+
+
+def test_metadata_reasons(monkeypatch):
+    monkeypatch.setattr(checks, "exists", lambda n: True)
+    monkeypatch.setattr(checks, "metadata", lambda n: {"releases": 1, "first_upload": None, "has_repository": False})
+    monkeypatch.setattr(checks, "security", lambda n: {"known_malicious": False, "vulnerabilities": ["A", "B"]})
+    assert evaluate("tiny").reasons == [
+        "only one release",
+        "no source repository linked",
+        "2 known vulnerabilities in some versions",
     ]
 
 

@@ -147,6 +147,7 @@ def evaluate(name: str, version: str | None = None) -> EvaluateResponse:
             decision=decide(score), score=score, reasons=["test blocklist"], signals={}
         )
     signals = collect_signals(name)
+    signals["name"] = name
     score = combine_score(signals)
     return EvaluateResponse(
         decision=decide(score), score=score, reasons=build_reasons(signals), signals=signals

@@ -11,7 +11,10 @@ node_modules/
 risk/data/raw/
 risk/models/*
 !risk/models/.gitkeep
+!risk/models/*.py
 *.pkl
 *.joblib
 *.ubj
 *.onnx
+!packguard/risk/saved_models/*.joblib
+!risk/saved_models/*.joblib

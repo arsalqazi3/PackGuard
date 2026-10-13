@@ -18,16 +18,40 @@ Plan:
 def extract_features(signals: dict) -> dict:
     """Turn Core Guard signals into a flat dict of numeric features.
 
-    `signals` uses the keys listed in gateway/contracts.py. Feature ideas:
-    exists_on_pypi, package age in days, number of releases, has repository URL,
-    number of typosquat matches, known_malicious, number of vulnerabilities,
-    and from signals["hallucination_evidence"]: total count and the number of
-    distinct models (cross-model agreement, the AI-specific signal from the proposal).
-    Keep this the same for training and for live scoring.
+    `signals` uses the keys listed in gateway/contracts.py.
     """
-    raise NotImplementedError
+    try:
+        from packguard.risk.service import engine
+        name = signals.get("name") or (signals.get("metadata") or {}).get("name", "")
+        if name:
+            return engine.pipeline.extract_single(name)
+    except Exception:
+        pass
+
+    meta = signals.get("metadata") or {}
+    evidence = signals.get("hallucination_evidence") or {}
+    return {
+        "exists_on_pypi": 1.0 if signals.get("exists_on_pypi") else 0.0,
+        "package_age_days": float(meta.get("age_days", 0)),
+        "total_releases": float(meta.get("releases", 0)),
+        "has_repository_url": 1.0 if meta.get("has_repository") else 0.0,
+        "is_in_evidence_table": 1.0 if evidence.get("count", 0) > 0 else 0.0,
+        "evidence_model_frequency": float(len(evidence.get("models", []))),
+    }
 
 
 def score(signals: dict) -> float:
     """Return a risk score between 0 and 1 (1 = risky) from the trained model."""
-    raise NotImplementedError
+    try:
+        from packguard.risk.service import engine
+        name = signals.get("name") or (signals.get("metadata") or {}).get("name", "")
+        if name:
+            res = engine.evaluate(name)
+            return float(res["score"])
+
+        features = extract_features(signals)
+        if engine.model is not None:
+            return float(engine.model.score_single(features)["score"])
+        return float(engine.baseline.score_single(features)["score"])
+    except Exception:
+        raise NotImplementedError

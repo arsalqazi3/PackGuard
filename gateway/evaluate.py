@@ -6,7 +6,6 @@ Either way the gateway keeps working.
 """
 import logging
 import os
-from pathlib import Path
 
 from core_guard import checks
 from gateway import db
@@ -22,18 +21,7 @@ BLOCK_THRESHOLD = float(os.getenv("BLOCK_THRESHOLD") or 0.8)
 # Temporary list so the block path can be tested end to end.
 TEST_BLOCKLIST = {"evil-test-pkg"}
 
-# One package name per line, lines starting with # are ignored. Filled by Core Guard.
-TOP_PACKAGES_FILE = Path(__file__).resolve().parent.parent / "core_guard" / "data" / "top_packages.txt"
-
-
-def load_top_packages(path: Path = TOP_PACKAGES_FILE) -> list[str]:
-    if not path.exists():
-        return []
-    lines = path.read_text(encoding="utf-8").splitlines()
-    return [line.strip() for line in lines if line.strip() and not line.startswith("#")]
-
-
-TOP_PACKAGES = load_top_packages()
+TOP_PACKAGES = checks.load_top_packages()
 
 
 def decide(score: float) -> str:
@@ -57,7 +45,7 @@ def _run(signals: dict, check: str, fn, *args):
 
 
 def collect_signals(name: str) -> dict:
-    signals: dict = {}
+    signals: dict = {"name": name}
 
     cached = db.get_cached_package(name)
     if cached:
@@ -110,6 +98,10 @@ def combine_score(signals: dict) -> float:
     if model_score is not None:
         signals["model_score"] = model_score
         scores.append(model_score)
+        if model_score >= WARN_THRESHOLD:
+            why = _run(signals, "risk_model_explain", model.explain, signals)
+            if why:
+                signals["model_reasons"] = why
     score = max(scores, default=0.0)
     return min(max(float(score), 0.0), 1.0)
 
@@ -135,6 +127,7 @@ def build_reasons(signals: dict) -> list[str]:
     vulns = (signals.get("security") or {}).get("vulnerabilities")
     if vulns:
         reasons.append(f"{len(vulns)} known vulnerabilities in some versions")
+    reasons += [f"AI model: {why}" for why in signals.get("model_reasons", [])]
     for check in signals.get("errors", {}):
         reasons.append(f"{check} check failed")
     return reasons

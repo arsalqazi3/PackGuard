@@ -1,11 +1,13 @@
-import sys
+"""Run with: python -m risk.train (needs requirements-train.txt and internet access)."""
 import time
+
 import pandas as pd
-from pathlib import Path
-from packguard.risk.config import GROUND_TRUTH_DIR, SAVED_MODELS_DIR
-from packguard.risk.features.pipeline import RiskFeaturePipeline
-from packguard.risk.models.xgboost_model import PackGuardXGBoostModel
-from packguard.risk.models.evaluator import ModelEvaluator
+
+from risk.config import GROUND_TRUTH_DIR, SAVED_MODELS_DIR
+from risk.dataset.signals import build_feature_table
+from risk.models.evaluator import ModelEvaluator
+from risk.models.xgboost_model import PackGuardXGBoostModel
+
 
 def run_training_and_evaluation():
     print("=" * 70)
@@ -18,35 +20,30 @@ def run_training_and_evaluation():
 
     if not train_path.exists():
         print("Ground truth datasets not found. Building now...")
-        from packguard.risk.dataset.builder import build_and_split_dataset
+        from risk.dataset.builder import build_and_split_dataset
         build_and_split_dataset()
 
     df_train = pd.read_csv(train_path)
     df_val = pd.read_csv(val_path)
 
-    pipeline = RiskFeaturePipeline()
-
     print(f"\n[1/4] Extracting features for Training Set ({len(df_train)} samples)...")
     t0 = time.time()
-    X_train = pipeline.transform(df_train["package_name"].tolist())
-    y_train = df_train["label"]
+    X_train, y_train, _ = build_feature_table(df_train)
     print(f"      Completed in {time.time() - t0:.2f}s")
 
     print(f"\n[2/4] Extracting features for Validation Set ({len(df_val)} samples)...")
     t0 = time.time()
-    X_val = pipeline.transform(df_val["package_name"].tolist())
-    y_val = df_val["label"]
+    X_val, y_val, _ = build_feature_table(df_val)
     print(f"      Completed in {time.time() - t0:.2f}s")
 
-    print(f"\n[3/4] Training PackGuard Calibrated XGBoost Classifier...")
+    print("\n[3/4] Training PackGuard XGBoost Classifier...")
     t0 = time.time()
     xgb_model = PackGuardXGBoostModel.train(X_train, y_train, X_val, y_val)
     xgb_model.save()
     print(f"      Model trained and saved in {time.time() - t0:.2f}s")
 
-    print(f"\n[4/4] Evaluating against Rule-Based Baseline on Held-Out Test Set...")
-    evaluator = ModelEvaluator(pipeline, xgb_model)
-    comparison_df = evaluator.evaluate_test_set(test_path)
+    print("\n[4/4] Evaluating against Core Guard Baseline on Held-Out Test Set...")
+    comparison_df = ModelEvaluator(xgb_model).evaluate_test_set(test_path)
 
     print("\n" + "=" * 70)
     print("OFFICIAL FYP-1 EVALUATION RESULTS TABLE")
@@ -57,6 +54,7 @@ def run_training_and_evaluation():
     comparison_df.to_csv(results_csv, index=False)
     print(f"\nResults saved to: {results_csv}")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     run_training_and_evaluation()

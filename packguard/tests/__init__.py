@@ -1,3 +1,0 @@
-"""
-PackGuard Test Suite
-"""

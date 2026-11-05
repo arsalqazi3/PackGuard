@@ -1,5 +1,5 @@
 """
-Explainability engine using SHAP for PackGuard
+Explainability engine using TreeSHAP for PackGuard
 """
 from .explainer import RiskExplainer
 

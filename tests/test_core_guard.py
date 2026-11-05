@@ -104,6 +104,15 @@ def test_metadata():
     assert meta["repository_url"] == "https://github.com/benjaminp/six"
     assert meta["author"] == "Benjamin Peterson"
     assert meta["description_length"] == len("long text " * 50)
+    assert meta["has_documentation"] is False
+
+
+def test_metadata_finds_documentation_link(monkeypatch):
+    data = {"info": {"project_urls": {"Docs": "https://example.com"}}, "releases": {}}
+    monkeypatch.setattr(checks, "_pypi_json", lambda name: data)
+    assert checks.metadata("x")["has_documentation"] is True
+    data["info"]["project_urls"] = {"Home": "https://x.readthedocs.io"}
+    assert checks.metadata("x")["has_documentation"] is True
 
 
 def test_metadata_missing_package():

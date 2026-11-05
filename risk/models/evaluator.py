@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -8,11 +8,14 @@ from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score
 )
-from typing import Dict, Any, Tuple
-from packguard.risk.config import GROUND_TRUTH_DIR, FEATURE_COLUMNS
-from packguard.risk.features.pipeline import RiskFeaturePipeline
-from packguard.risk.models.baseline import RuleBasedBaseline
-from packguard.risk.models.xgboost_model import PackGuardXGBoostModel
+from typing import Dict, List
+
+from core_guard.checks import baseline_score
+from gateway.evaluate import decide
+from risk.config import GROUND_TRUTH_DIR
+from risk.dataset.signals import build_feature_table
+from risk.models.xgboost_model import PackGuardXGBoostModel
+
 
 def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_proba: np.ndarray) -> Dict[str, float]:
     """
@@ -44,15 +47,32 @@ def calculate_metrics(y_true: np.ndarray, y_pred: np.ndarray, y_proba: np.ndarra
         "False Negatives": int(fn)
     }
 
+
+def _block_labels(scores: np.ndarray) -> np.ndarray:
+    # Uses the gateway's own thresholds, so results match what pip would see.
+    return np.array([1 if decide(float(s)) == "block" else 0 for s in scores])
+
+
 class ModelEvaluator:
     """
-    Evaluator that rigorously tests and compares the Rule-Based Baseline
-    against the XGBoost Model on the Held-Out Test Set.
+    Compares Core Guard's rule based baseline against the XGBoost model.
     """
-    def __init__(self, pipeline: RiskFeaturePipeline, xgb_model: PackGuardXGBoostModel):
-        self.pipeline = pipeline
+    def __init__(self, xgb_model: PackGuardXGBoostModel):
         self.xgb_model = xgb_model
-        self.baseline = RuleBasedBaseline()
+
+    def compare(self, X: pd.DataFrame, y: pd.Series, signals: List[dict]) -> pd.DataFrame:
+        y_true = y.to_numpy()
+
+        baseline_proba = np.array([baseline_score(s) for s in signals])
+        baseline_metrics = calculate_metrics(y_true, _block_labels(baseline_proba), baseline_proba)
+
+        xgb_proba = self.xgb_model.predict_proba(X)
+        xgb_metrics = calculate_metrics(y_true, _block_labels(xgb_proba), xgb_proba)
+
+        return pd.DataFrame([
+            {"Model": "Core Guard Baseline", **baseline_metrics},
+            {"Model": "PackGuard XGBoost", **xgb_metrics}
+        ])
 
     def evaluate_test_set(self, test_ground_truth_path=None) -> pd.DataFrame:
         if test_ground_truth_path is None:
@@ -60,27 +80,4 @@ class ModelEvaluator:
 
         df_test = pd.read_csv(test_ground_truth_path)
         print(f"Loaded held-out test set with {len(df_test)} packages.")
-
-        # Extract features
-        packages = df_test["package_name"].tolist()
-        y_true = df_test["label"].to_numpy()
-
-        X_test = self.pipeline.transform(packages)
-
-        # Baseline Predictions
-        baseline_proba = np.array(self.baseline.predict_proba(X_test))
-        baseline_preds = np.array(self.baseline.predict(X_test))
-        baseline_metrics = calculate_metrics(y_true, baseline_preds, baseline_proba)
-
-        # XGBoost Predictions
-        xgb_proba = self.xgb_model.predict_proba(X_test)
-        xgb_preds = self.xgb_model.predict(X_test)
-        xgb_metrics = calculate_metrics(y_true, xgb_preds, xgb_proba)
-
-        # Compare side-by-side
-        comparison_df = pd.DataFrame([
-            {"Model": "Rule-Based Baseline", **baseline_metrics},
-            {"Model": "PackGuard XGBoost", **xgb_metrics}
-        ])
-
-        return comparison_df
+        return self.compare(*build_feature_table(df_test))

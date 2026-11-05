@@ -1,15 +1,10 @@
 import re
 import math
-import json
 from collections import Counter
-from typing import Dict, Any, List, Set, Optional
+from typing import Dict, Any, List, Set
 from rapidfuzz import process, distance, fuzz
-from packguard.risk.config import (
-    AI_SUSPICIOUS_AFFIXES,
-    POPULAR_PACKAGES_COUNT,
-    POPULAR_PACKAGES_CACHE_FILE,
-    PYPI_MASTER_LIST_PATH
-)
+from core_guard.checks import load_top_packages
+from risk.config import AI_SUSPICIOUS_AFFIXES
 
 def normalize_package_name(name: str) -> str:
     """PEP 503 compliant package name normalization."""
@@ -41,58 +36,15 @@ class LexicalAnalyzer:
     """
     Analyzes lexical characteristics, name entropy, AI hallucination affixes,
     and typosquatting edit distances against popular PyPI packages.
+    Uses the same top packages list as Core Guard's typosquat check.
     """
-    _instance = None
     _popular_packages: List[str] = []
+    _popular_set: Set[str] = set()
 
     def __init__(self):
         if not LexicalAnalyzer._popular_packages:
-            self._load_popular_packages()
-
-    def _load_popular_packages(self):
-        """Loads or builds the top popular PyPI reference set for typosquat detection."""
-        if POPULAR_PACKAGES_CACHE_FILE.exists():
-            try:
-                with open(POPULAR_PACKAGES_CACHE_FILE, "r", encoding="utf-8") as f:
-                    LexicalAnalyzer._popular_packages = json.load(f)
-                    LexicalAnalyzer._popular_set = set(LexicalAnalyzer._popular_packages)
-                    return
-            except Exception:
-                pass
-
-        popular = []
-        # Curated core popular packages seeded first
-        seed_popular = [
-            "requests", "numpy", "pandas", "urllib3", "six", "boto3", "botocore",
-            "setuptools", "certifi", "pip", "idna", "charset-normalizer", "typing-extensions",
-            "python-dateutil", "s3transfer", "wheel", "pytz", "rsa", "pyyaml", "packaging",
-            "pytest", "click", "pydantic", "attrs", "cffi", "cryptography", "jinja2", "markupsafe",
-            "scipy", "scikit-learn", "torch", "tensorflow", "fastapi", "flask", "django", "celery",
-            "sqlalchemy", "redis", "pillow", "matplotlib", "seaborn", "tqdm", "httpx", "aiohttp",
-            "psycopg2", "pyjwt", "werkzeug", "gunicorn", "uvicorn", "docker", "paramiko"
-        ]
-        popular.extend(seed_popular)
-
-        # Load from pypi_package_names.csv if present to fill up to POPULAR_PACKAGES_COUNT
-        if PYPI_MASTER_LIST_PATH.exists():
-            try:
-                with open(PYPI_MASTER_LIST_PATH, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        pkg = line.strip().lower()
-                        if pkg and pkg not in popular:
-                            popular.append(pkg)
-                        if len(popular) >= POPULAR_PACKAGES_COUNT:
-                            break
-            except Exception:
-                pass
-
-        LexicalAnalyzer._popular_packages = popular
-        LexicalAnalyzer._popular_set = set(popular)
-        try:
-            with open(POPULAR_PACKAGES_CACHE_FILE, "w", encoding="utf-8") as f:
-                json.dump(popular, f)
-        except Exception:
-            pass
+            LexicalAnalyzer._popular_packages = load_top_packages()
+            LexicalAnalyzer._popular_set = set(LexicalAnalyzer._popular_packages)
 
     def compute_typosquat_signals(self, name: str) -> Dict[str, float]:
         """
@@ -104,7 +56,7 @@ class LexicalAnalyzer:
             return {"min_edit_distance_popular": 99.0, "similarity_ratio_popular": 0.0}
 
         # Exact match O(1) check
-        if norm_name in getattr(self, "_popular_set", set(self._popular_packages)):
+        if norm_name in self._popular_set:
             return {"min_edit_distance_popular": 0.0, "similarity_ratio_popular": 100.0}
 
         # Candidate pruning: only packages with length difference <= 2 can be typosquats

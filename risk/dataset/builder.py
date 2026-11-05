@@ -4,12 +4,12 @@ import json
 import pandas as pd
 from pathlib import Path
 from typing import List, Tuple, Dict
-from packguard.risk.config import (
+from risk.config import (
     GROUND_TRUTH_DIR,
     PYPI_MASTER_LIST_PATH,
     AI_SUSPICIOUS_AFFIXES
 )
-from packguard.risk.features.lexical import normalize_package_name
+from risk.features.lexical import normalize_package_name
 
 # Fix random seed for reproducibility (essential for academic evaluation)
 RANDOM_SEED = 42

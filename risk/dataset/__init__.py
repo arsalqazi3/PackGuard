@@ -1,6 +1,3 @@
 """
-Dataset management and PyPI caching utilities
+Dataset building for training. The gateway never imports this package.
 """
-from .pypi_cache import PyPICache
-
-__all__ = ["PyPICache"]

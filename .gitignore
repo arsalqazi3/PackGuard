@@ -9,12 +9,9 @@ node_modules/
 
 # data and models
 risk/data/raw/
-risk/models/*
-!risk/models/.gitkeep
-!risk/models/*.py
+risk/data/cache/
+Zenodo dataset/
 *.pkl
 *.joblib
 *.ubj
 *.onnx
-!packguard/risk/saved_models/*.joblib
-!risk/saved_models/*.joblib

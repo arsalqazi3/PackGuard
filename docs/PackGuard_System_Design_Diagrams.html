@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PackGuard — System Design Diagrams</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root{--ink:#10243e;--muted:#5f6b7a;--line:#d6dde6;--bg:#ffffff;--soft:#f5f8fb}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#1a1a1a;
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       line-height:1.6}
+  header{padding:40px 48px 28px;border-bottom:3px solid var(--ink)}
+  h1{margin:0 0 6px;font-size:28px;font-weight:600;color:var(--ink)}
+  header p{margin:0;color:var(--muted);font-size:15px}
+  nav{padding:20px 48px;background:var(--soft);border-bottom:1px solid var(--line);
+      display:flex;flex-wrap:wrap;gap:8px 18px}
+  nav a{color:var(--ink);text-decoration:none;font-size:13.5px;border-bottom:1px solid transparent}
+  nav a:hover{border-bottom-color:var(--ink)}
+  main{padding:8px 48px 64px;max-width:1180px}
+  section{padding:34px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:20px;font-weight:600;color:var(--ink);margin:0 0 4px}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+       color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:2px 7px;
+       margin-bottom:10px}
+  .note{margin:0 0 18px;color:var(--muted);font-size:14.5px;max-width:820px}
+  .frame{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:22px;overflow-x:auto}
+  .mermaid{display:flex;justify-content:center}
+  .legend{display:flex;flex-wrap:wrap;gap:14px 22px;margin:18px 0 0;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+  footer{padding:28px 48px 56px;color:var(--muted);font-size:13px}
+  code{background:#eef2f6;padding:1px 5px;border-radius:3px;font-size:.9em}
+  @media print{nav{display:none}section{break-inside:avoid;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PackGuard — System Design Diagrams</h1>
+  <p>AI-assisted multi-layer software supply-chain defense platform · FAST-NUCES Karachi · FYP 2026&ndash;27</p>
+</header>
+
+<nav>
+  <a href="#arch">1. System architecture</a>
+  <a href="#c4ctx">2a. C4 context</a>
+  <a href="#c4con">2b. C4 container</a>
+  <a href="#c4com">2c. C4 component</a>
+  <a href="#deploy">3. Deployment</a>
+  <a href="#network">4. Network</a>
+  <a href="#component">5. Component</a>
+  <a href="#class">6. Class</a>
+  <a href="#erd">7. ERD</a>
+  <a href="#sequence">8. Sequence</a>
+  <a href="#dfd0">9a. DFD level 0</a>
+  <a href="#dfd1">9b. DFD level 1</a>
+  <a href="#activity">10. Activity</a>
+  <a href="#state">11. State machine</a>
+  <a href="#impl">12. Implementation structure</a>
+</nav>
+
+<main>
+
+<section id="arch">
+  <span class="tag">High-level architecture</span>
+  <h2>1. System architecture diagram</h2>
+  <p class="note">Four layers. The interception layer catches an install request before it reaches a real registry, the core layer scores it using registry, metadata and cross-model evidence, the decision engine turns that into one verdict, and persistence keeps a full record of what happened and why.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  subgraph SRC["Install request sources"]
+    CLI["Developer CLI<br/>npm / pip install"]
+    AGENT["AI coding assistant<br/>agentic install"]
+    CIREQ["CI / CD pipeline<br/>dependency change"]
+  end
+
+  subgraph CORE["PackGuard core"]
+    CG["Core Guard<br/>registry + typosquat check"]
+    RE["Risk Engine<br/>Bayesian score + ML model"]
+    XM["Cross-Model Checker<br/>shared-hallucination lookup"]
+    RG["Runtime Guard<br/>sandboxed execution"]
+    DE["Decision Engine<br/>Allow / Warn / Quarantine / Block"]
+  end
+
+  subgraph EXT["External services"]
+    REG["PyPI / npm registries"]
+    LLMS["LLM APIs<br/>Claude, GPT, Gemini, DeepSeek"]
+    OSSF["OpenSSF malicious-packages DB"]
+  end
+
+  subgraph STORE["Persistence"]
+    PDB[("PostgreSQL<br/>package + decision records")]
+    HTAB[("Cross-model<br/>hallucination table")]
+    PROV[("Provenance /<br/>audit log")]
+  end
+
+  SRC --> CG
+  CG --> REG
+  CG --> OSSF
+  CG --> RE
+  RE --> XM
+  XM -.offline batch.-> LLMS
+  XM --> HTAB
+  RE --> DE
+  DE --> RG
+  RG --> DE
+  DE --> PROV
+  DE --> PDB
+  DE -->|verdict| SRC
+
+  classDef ours fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef tool fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+  classDef data fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class CG,RE,XM,RG,DE ours
+  class REG,LLMS,OSSF tool
+  class PDB,HTAB,PROV,CLI,AGENT,CIREQ data
+  </pre></div>
+</section>
+
+<section id="c4ctx">
+  <span class="tag">C4 model · level 1</span>
+  <h2>2a. C4 context diagram</h2>
+  <p class="note">Who and what PackGuard talks to. A developer never has to manually vet a package; they see a verdict, and only an uncertain case reaches a human reviewer.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  DEV(["Developer /<br/><i>AI coding assistant</i>"])
+  LEAD(["Team lead<br/><i>handles escalations</i>"])
+  PG["<b>PackGuard</b><br/>Supply-chain defense platform<br/><i>decides whether a package is<br/>safe to install</i>"]
+  REG["npm / PyPI<br/><i>package registries</i>"]
+  LLM["LLM provider APIs<br/><i>Claude, GPT, Gemini, DeepSeek</i>"]
+  CI["GitHub Actions<br/><i>CI/CD pipeline</i>"]
+
+  DEV -->|install request| PG
+  PG -->|verdict + explanation| DEV
+  PG -->|registry / metadata lookup| REG
+  PG -->|batch hallucination probe| LLM
+  CI -->|triggers dependency check| PG
+  PG -->|posts pass/fail status| CI
+  PG -->|escalates uncertain case| LEAD
+  LEAD -->|approves or overrides| PG
+
+  classDef sys fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef ext fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  classDef person fill:#E6F1FB,stroke:#185FA5,color:#042C53
+  class PG sys
+  class REG,LLM,CI ext
+  class DEV,LEAD person
+  </pre></div>
+</section>
+
+<section id="c4con">
+  <span class="tag">C4 model · level 2</span>
+  <h2>2b. C4 container diagram</h2>
+  <p class="note">Inside the system boundary. Every service is a small Python container behind FastAPI; the only stateful pieces are the database and the ephemeral sandbox.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  CLI["Proxy / CLI entrypoint<br/><i>Verdaccio + devpi</i>"]
+  DASH["Dashboard<br/><i>Next.js</i>"]
+
+  subgraph BOX["PackGuard services (Docker Compose)"]
+    CGC["Core Guard<br/><i>FastAPI, Python</i>"]
+    REC["Risk Engine<br/><i>FastAPI, scikit-learn, XGBoost</i>"]
+    XMC["Cross-Model Checker<br/><i>Python, scheduled job</i>"]
+    DEC["Decision Engine<br/><i>FastAPI, rule logic</i>"]
+    RGC["Runtime Guard controller<br/><i>Python, Docker SDK</i>"]
+  end
+
+  SBX["Sandbox containers<br/><i>ephemeral, one per test</i>"]
+  DB[("PostgreSQL<br/>records, scores, audit log")]
+  LLM["LLM provider APIs"]
+  REG["npm / PyPI registries"]
+
+  CLI --> CGC
+  CGC --> REG
+  CGC --> REC
+  REC --> XMC
+  XMC -.batch query.-> LLM
+  REC --> DEC
+  DEC --> RGC
+  RGC --> SBX
+  SBX --> RGC
+  RGC --> DEC
+  DEC --> DB
+  DASH --> DB
+  CGC --> DB
+  REC --> DB
+
+  classDef ours fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef tool fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+  classDef data fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class CGC,REC,XMC,DEC,RGC,CLI,DASH ours
+  class LLM,REG,SBX tool
+  class DB data
+  </pre></div>
+</section>
+
+<section id="c4com">
+  <span class="tag">C4 model · level 3</span>
+  <h2>2c. C4 component diagram — Risk Engine</h2>
+  <p class="note">The Risk Engine decomposed. The metadata channel is what catches a package that already exists on the registry but was only just registered under a hallucinated name.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  IN["Verified package name<br/>from Core Guard"]
+
+  subgraph ENGINE["Risk Engine"]
+    RC["Registry channel<br/><i>existence + neighbour search</i>"]
+    MC["Metadata channel<br/><i>age, author, release count</i>"]
+    XC["Cross-model channel<br/><i>hallucination table lookup</i>"]
+    BC["Bayesian calibrator<br/><i>Beta-Binomial posterior</i>"]
+    ML["ML scorer<br/><i>XGBoost, trained features</i>"]
+    AGG["Score aggregator<br/><i>combined risk probability</i>"]
+  end
+
+  OUT["Calibrated risk score<br/>to Decision Engine"]
+
+  IN --> RC --> BC
+  IN --> MC --> BC
+  IN --> XC --> BC
+  MC --> ML
+  XC --> ML
+  BC --> AGG
+  ML --> AGG
+  AGG --> OUT
+
+  classDef ours fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef io fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class RC,MC,XC,BC,ML,AGG ours
+  class IN,OUT io
+  </pre></div>
+</section>
+
+<section id="deploy">
+  <span class="tag">High-level architecture</span>
+  <h2>3. Deployment diagram</h2>
+  <p class="note">One AWS EC2 instance hosts the always-on services; the sandbox spins up short-lived containers per flagged package rather than staying resident.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  subgraph WS["Developer machine"]
+    NPM["npm / pip CLI"]
+  end
+
+  subgraph PROXY["Registry proxy (Docker)"]
+    VER["Verdaccio"]
+    DEV2["devpi"]
+  end
+
+  subgraph EC2["AWS EC2 — Docker host"]
+    CGN["Core Guard"]
+    REN["Risk Engine"]
+    DEN["Decision Engine"]
+    DAS["Dashboard"]
+  end
+
+  subgraph SBX["Docker sandbox — ephemeral, per package"]
+    RGN["Runtime Guard container"]
+  end
+
+  DB[("PostgreSQL<br/>RDS or self-hosted")]
+  REGAPI(["npm / PyPI APIs<br/>HTTPS 443"])
+  LLMAPI(["LLM provider APIs<br/>HTTPS 443"])
+
+  WS -->|HTTPS| PROXY
+  PROXY -->|HTTP, internal| EC2
+  EC2 -->|Docker API| SBX
+  EC2 -->|TCP 5432| DB
+  EC2 -->|HTTPS| REGAPI
+  EC2 -->|HTTPS, batch job| LLMAPI
+
+  classDef node fill:#E1F5EE,stroke:#0F6E56,color:#04342C
+  classDef data fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class NPM,VER,DEV2,CGN,REN,DEN,DAS,RGN node
+  class DB,REGAPI,LLMAPI data
+  </pre></div>
+</section>
+
+<section id="network">
+  <span class="tag">High-level architecture</span>
+  <h2>4. Network diagram</h2>
+  <p class="note">The sandbox is the one place that must see real network attempts, so its egress is not blocked, it is routed through a monitored proxy that logs every destination before deciding what to allow.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart LR
+  subgraph HOST["EC2 host"]
+    subgraph NET["PackGuard service network"]
+      APP["Core Guard /<br/>Risk Engine / Decision Engine"]
+    end
+    subgraph SBXNET["Sandbox network — monitored egress"]
+      PKG["Package under test"]
+      MON["Egress monitor<br/><i>logs every connection attempt</i>"]
+    end
+  end
+
+  ALLOW{{"Service egress allowlist"}}
+  REGAPI(["registry APIs<br/>TCP 443"])
+  LLMAPI(["LLM provider APIs<br/>TCP 443"])
+  UNKNOWN(["Unlisted destination<br/>from sandboxed package"])
+
+  APP --> ALLOW
+  ALLOW -->|permitted| REGAPI
+  ALLOW -->|permitted| LLMAPI
+  PKG --> MON
+  MON -->|logged, then evaluated| UNKNOWN
+
+  classDef ours fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef flagged fill:#FAEEDA,stroke:#854F0B,color:#412402
+  classDef ok fill:#EAF3DE,stroke:#3B6D11,color:#173404
+  class APP,MON ours
+  class UNKNOWN,PKG flagged
+  class REGAPI,LLMAPI,ALLOW ok
+  </pre></div>
+</section>
+
+<section id="component">
+  <span class="tag">Component &amp; structural</span>
+  <h2>5. Component diagram</h2>
+  <p class="note">Components and the interfaces between them. Each provided interface is a small REST contract, which keeps every layer independently testable.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  ORCH["<b>Proxy / CLI</b><br/>intercepts install"]
+
+  CG["<b>CoreGuardService</b><br/><i>ICheckPackage</i>"]
+  RC["<b>RegistryChannel</b><br/><i>IRegistryProbe</i>"]
+  MC["<b>MetadataChannel</b><br/><i>IMetadataSignal</i>"]
+  XM["<b>CrossModelChecker</b><br/><i>IHallucSignal</i>"]
+  RE["<b>RiskEngineService</b><br/><i>IScorePackage</i>"]
+  DE["<b>DecisionEngineService</b><br/><i>IDecide</i>"]
+  RG["<b>RuntimeGuardService</b><br/><i>ISandboxTest</i>"]
+  PS["<b>ProvenanceStore</b><br/><i>ILogDecision</i>"]
+  DASH["<b>DashboardService</b><br/><i>IReadRecords</i>"]
+
+  ORCH --> CG
+  CG --> RC
+  CG --> MC
+  RE --> RC
+  RE --> MC
+  RE --> XM
+  CG --> RE
+  RE --> DE
+  DE --> RG
+  DE --> PS
+  PS --> DASH
+
+  classDef ours fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  class ORCH,CG,RC,MC,XM,RE,DE,RG,PS,DASH ours
+  </pre></div>
+</section>
+
+<section id="class">
+  <span class="tag">Component &amp; structural</span>
+  <h2>6. Class diagram</h2>
+  <p class="note">Core domain model. <code>RiskScore</code> and <code>Decision</code> are kept separate on purpose — a decision should always be traceable back to the exact score and evidence that produced it.</p>
+  <div class="frame"><pre class="mermaid">
+classDiagram
+  direction TB
+
+  class PackageRequest {
+    +str name
+    +str ecosystem
+    +str requested_version
+    +str source
+    +datetime requested_at
+  }
+
+  class RegistryCheckResult {
+    +bool exists
+    +str nearest_neighbour
+    +float levenshtein_distance
+  }
+
+  class MetadataSignal {
+    +int age_days
+    +int release_count
+    +bool author_present
+    +bool description_present
+  }
+
+  class CrossModelSignal {
+    +bool in_hallucination_table
+    +int model_agreement_count
+    +str matched_models
+  }
+
+  class RiskScore {
+    +float posterior_mean
+    +float posterior_alpha
+    +float posterior_beta
+    +str epistemic_category
+    +compute() float
+  }
+
+  class Decision {
+    +Verdict verdict
+    +str rationale
+    +float risk_score
+    +datetime decided_at
+  }
+
+  class SandboxResult {
+    +bool executed
+    +str network_calls
+    +str file_writes
+    +bool suspicious_behaviour
+  }
+
+  class ProvenanceRecord {
+    +str record_id
+    +str package_name
+    +str decision_id
+    +str evidence_hash
+    +to_jsonl() str
+  }
+
+  class Verdict {
+    <<enumeration>>
+    ALLOW
+    WARN
+    QUARANTINE
+    BLOCK
+  }
+
+  PackageRequest --> RegistryCheckResult
+  PackageRequest --> MetadataSignal
+  PackageRequest --> CrossModelSignal
+  RegistryCheckResult --> RiskScore
+  MetadataSignal --> RiskScore
+  CrossModelSignal --> RiskScore
+  RiskScore --> Decision
+  Decision --> SandboxResult
+  Decision --> ProvenanceRecord
+  </pre></div>
+</section>
+
+<section id="erd">
+  <span class="tag">Component &amp; structural</span>
+  <h2>7. Entity-relationship diagram</h2>
+  <p class="note">The PostgreSQL schema. The hallucination table is populated by an offline batch job and is never written to by a live install check, that separation keeps the signal reproducible.</p>
+  <div class="frame"><pre class="mermaid">
+erDiagram
+  PACKAGE ||--o{ RISK_SCORE : "scored_by"
+  PACKAGE {
+    string package_id PK
+    string name
+    string ecosystem
+    datetime first_seen
+  }
+  RISK_SCORE ||--|| DECISION : "leads_to"
+  RISK_SCORE {
+    string score_id PK
+    string package_id FK
+    float posterior_mean
+    string epistemic_category
+    datetime scored_at
+  }
+  DECISION ||--o| SANDBOX_RUN : "may_trigger"
+  DECISION {
+    string decision_id PK
+    string package_id FK
+    string score_id FK
+    string verdict
+    string rationale
+    datetime decided_at
+  }
+  SANDBOX_RUN {
+    string run_id PK
+    string decision_id FK
+    bool suspicious_behaviour
+    string log_path
+    float duration_s
+  }
+  DECISION ||--|| AUDIT_LOG : "recorded_in"
+  AUDIT_LOG {
+    string audit_id PK
+    string decision_id FK
+    string evidence_hash
+    datetime logged_at
+  }
+  CROSS_MODEL_HALLUCINATION {
+    string entry_id PK
+    string package_name
+    string ecosystem
+    int model_agreement_count
+    datetime batch_run_at
+  }
+  PACKAGE ||--o| CROSS_MODEL_HALLUCINATION : "matched_against"
+  </pre></div>
+</section>
+
+<section id="sequence">
+  <span class="tag">Behavioral &amp; flow</span>
+  <h2>8. Sequence diagram</h2>
+  <p class="note">One install request handled end to end. The Runtime Guard step only runs when the Decision Engine actually quarantines the package, most requests never reach it.</p>
+  <div class="frame"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  actor D as Developer / AI assistant
+  participant P as Proxy (Verdaccio/devpi)
+  participant C as Core Guard
+  participant R as Risk Engine
+  participant X as Cross-Model Table
+  participant E as Decision Engine
+  participant S as Runtime Guard
+  participant V as Provenance Store
+
+  D->>P: npm install / pip install
+  P->>C: check(package_name)
+  C->>C: registry probe + typosquat check
+  C-->>P: verified name or registry-miss
+  P->>R: score(package)
+  R->>X: lookup(package_name)
+  X-->>R: model_agreement_count
+  R->>R: Bayesian + ML score
+  R-->>E: risk score
+
+  alt score is high risk
+    E->>S: sandbox_test(package)
+    S-->>E: behaviour report
+  end
+
+  E->>E: apply Allow/Warn/Quarantine/Block rule
+  E->>V: log(decision, evidence)
+  E-->>P: verdict + rationale
+  P-->>D: install allowed / blocked / warned
+  </pre></div>
+</section>
+
+<section id="dfd0">
+  <span class="tag">Behavioral &amp; flow</span>
+  <h2>9a. Data flow diagram — level 0 (context)</h2>
+  <p class="note">PackGuard as a single process with its external entities and its one data store.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart LR
+  DEV(["Developer /<br/>AI assistant"])
+  REGX(["npm / PyPI<br/>registries"])
+  LLMX(["LLM provider<br/>APIs"])
+  LEAD(["Team lead"])
+
+  P0["<b>0</b><br/>PackGuard<br/>package risk evaluation"]
+
+  DS1[("D1 Records DB")]
+
+  DEV -->|install request| P0
+  P0 -->|verdict + rationale| DEV
+  P0 -->|registry query| REGX
+  REGX -->|existence + metadata| P0
+  P0 -->|batch hallucination probe| LLMX
+  LLMX -->|generated package names| P0
+  P0 -->|escalation| LEAD
+  LEAD -->|override| P0
+  P0 -->|scores, decisions| DS1
+
+  classDef proc fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef ent fill:#E6F1FB,stroke:#185FA5,color:#042C53
+  classDef store fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class P0 proc
+  class DEV,REGX,LLMX,LEAD ent
+  class DS1 store
+  </pre></div>
+</section>
+
+<section id="dfd1">
+  <span class="tag">Behavioral &amp; flow</span>
+  <h2>9b. Data flow diagram — level 1</h2>
+  <p class="note">Process 0 decomposed into six numbered sub-processes and the data stores each one touches.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  DEV(["Developer / AI assistant"])
+  REGX(["npm / PyPI registries"])
+  LLMX(["LLM provider APIs"])
+  LEAD(["Team lead"])
+
+  P1["<b>1.0</b><br/>Verify package"]
+  P2["<b>2.0</b><br/>Score risk"]
+  P3["<b>3.0</b><br/>Check cross-model<br/>consensus"]
+  P4["<b>4.0</b><br/>Decide action"]
+  P5["<b>5.0</b><br/>Sandbox test"]
+  P6["<b>6.0</b><br/>Log and report"]
+
+  DS1[("D1 Package metadata")]
+  DS2[("D2 Hallucination table")]
+  DS3[("D3 Decision / audit log")]
+
+  DEV -->|install request| P1
+  P1 <-->|registry probe| REGX
+  P1 -->|verified name| P2
+  P2 <-->|read metadata| DS1
+  P2 -->|package name| P3
+  P3 <-->|shared names| DS2
+  LLMX -.batch update.-> DS2
+  P3 -->|risk score| P4
+  P4 -->|quarantine| P5
+  P5 -->|sandbox result| P4
+  P4 -->|final decision| P6
+  P6 -->|write record| DS3
+  P6 -->|risk report| DEV
+  P6 -->|escalation| LEAD
+  LEAD -->|override| DS3
+
+  classDef proc fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef ent fill:#E6F1FB,stroke:#185FA5,color:#042C53
+  classDef store fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A
+  class P1,P2,P3,P4,P5,P6 proc
+  class DEV,REGX,LLMX,LEAD ent
+  class DS1,DS2,DS3 store
+  </pre></div>
+</section>
+
+<section id="activity">
+  <span class="tag">Behavioral &amp; flow</span>
+  <h2>10. Activity diagram</h2>
+  <p class="note">The full decision logic. This is the diagram to point at when a panel asks exactly how a risk score becomes a verdict.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  ST(["Start"]) --> A1["Receive install request"]
+  A1 --> A2["Registry probe"]
+  A2 --> D1{"Package name<br/>resolves?"}
+  D1 -->|no| A3["Check cross-model<br/>hallucination table"]
+  A3 --> D2{"Multiple models<br/>invented this name?"}
+  D2 -->|yes| B1["Verdict = BLOCK<br/>high-confidence hallucination"]
+  D2 -->|no| B2["Verdict = BLOCK<br/>unresolved package name"]
+  D1 -->|yes| A4["Read metadata<br/>age, author, releases"]
+  A4 --> A5["Compute Bayesian +<br/>ML risk score"]
+  A5 --> D3{"Risk score<br/>band?"}
+  D3 -->|low| B3["Verdict = ALLOW"]
+  D3 -->|medium| B4["Verdict = WARN"]
+  D3 -->|high| A6["Sandbox test package"]
+  A6 --> D4{"Suspicious<br/>behaviour observed?"}
+  D4 -->|yes| B5["Verdict = BLOCK<br/>confirmed at runtime"]
+  D4 -->|no| B6["Verdict = ALLOW<br/>cleared after sandbox"]
+
+  B1 --> EN["Write evidence record"]
+  B2 --> EN
+  B3 --> EN
+  B4 --> EN
+  B5 --> EN
+  B6 --> EN
+  EN --> ED(["End"])
+
+  classDef block fill:#FCEBEB,stroke:#A32D2D,color:#501313
+  classDef warn fill:#FAEEDA,stroke:#854F0B,color:#412402
+  classDef pass fill:#EAF3DE,stroke:#3B6D11,color:#173404
+  class B1,B2,B5 block
+  class B4 warn
+  class B3,B6 pass
+  </pre></div>
+</section>
+
+<section id="state">
+  <span class="tag">Behavioral &amp; flow</span>
+  <h2>11. State machine diagram</h2>
+  <p class="note">Lifecycle of a single package check, from the moment it is requested to the moment it is logged. Quarantine is the only state that can lead to more than one outcome.</p>
+  <div class="frame"><pre class="mermaid">
+stateDiagram-v2
+  direction TB
+  [*] --> Requested
+  Requested --> CheckingRegistry : Core Guard invoked
+
+  CheckingRegistry --> NameMissing : registry probe fails
+  CheckingRegistry --> NameFound : registry probe succeeds
+
+  NameMissing --> CheckingCrossModel : lookup hallucination table
+  CheckingCrossModel --> Blocked : name in table (multi-model)
+  CheckingCrossModel --> Blocked : name unresolved (single check)
+
+  NameFound --> ScoringRisk : metadata + ML scoring
+  ScoringRisk --> Allowed : low risk
+  ScoringRisk --> Warned : medium risk
+  ScoringRisk --> Quarantined : high risk
+
+  Quarantined --> SandboxTesting : Runtime Guard invoked
+  SandboxTesting --> Blocked : suspicious behaviour found
+  SandboxTesting --> Allowed : cleared after test
+
+  Allowed --> Logged
+  Warned --> Logged
+  Blocked --> Logged
+  Logged --> [*]
+
+  note right of Quarantined
+    Only state that routes
+    through the sandbox before
+    a final verdict is reached
+  end note
+  </pre></div>
+</section>
+
+<section id="impl">
+  <span class="tag">Build plan</span>
+  <h2>12. Implementation structure</h2>
+  <p class="note">What gets built, in what order, and with which tools. Phases 3 and 6 don't depend on the phase before them, so they run in parallel with the main path rather than waiting their turn. The Decision Engine is deliberately last, it only makes sense once every other phase is producing real evidence to combine.</p>
+  <div class="frame"><pre class="mermaid">
+flowchart TB
+  P1["<b>1. Core Guard</b><br/><i>Verdaccio, devpi, Python,<br/>FastAPI, rapidfuzz</i>"]
+  P2["<b>2. Risk Scoring</b><br/>Bayesian two-channel score<br/><i>Python, scipy</i>"]
+  P3["<b>3. Cross-Model Checker</b><br/>runs in parallel with 2<br/><i>LLM provider APIs, Python batch job</i>"]
+  P4["<b>4. ML Risk Model</b><br/>needs real data from 1&ndash;3 first<br/><i>scikit-learn, XGBoost, PostgreSQL</i>"]
+  P5["<b>5. Runtime Guard</b><br/><i>Docker, Docker SDK for Python</i>"]
+  P6["<b>6. Provenance Store</b><br/>runs in parallel with 5<br/><i>PostgreSQL, Next.js, Tailwind</i>"]
+  P7["<b>7. Decision Engine</b><br/>final integration layer<br/><i>Python rule logic, FastAPI</i>"]
+
+  L1(("Layer 1<br/>Core Guard"))
+  L2(("Layer 2<br/>AI Risk Prediction"))
+  L3(("Layer 3<br/>Runtime Guard"))
+  L4(("Layer 4<br/>Provenance"))
+  L5(("Layer 5<br/>Decision Engine"))
+
+  P1 --> P2
+  P2 --> P3
+  P2 --> P4
+  P3 --> P4
+  P4 --> P5
+  P4 --> P6
+  P5 --> P7
+  P6 --> P7
+
+  P1 -.belongs to.- L1
+  P2 -.belongs to.- L2
+  P3 -.belongs to.- L2
+  P4 -.belongs to.- L2
+  P5 -.belongs to.- L3
+  P6 -.belongs to.- L4
+  P7 -.belongs to.- L5
+
+  classDef phase fill:#EEEDFE,stroke:#534AB7,color:#26215C
+  classDef layer fill:#F1EFE8,stroke:#5F5E5A,color:#2C2C2A,font-size:11px
+  class P1,P2,P3,P4,P5,P6,P7 phase
+  class L1,L2,L3,L4,L5 layer
+  </pre></div>
+  <div class="legend">
+    <span><span class="swatch" style="background:#EEEDFE;border-color:#534AB7"></span>Build phase (numbered, in order)</span>
+    <span><span class="swatch" style="background:#F1EFE8;border-color:#5F5E5A"></span>Which of the five layers it belongs to</span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  PackGuard · Arslan Asad (23I-2505) · Ammar Hussain (23K-0520) · M Asad Ur Rehman Bin Usman (23K-0902) · FAST-NUCES Karachi
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  securityLevel: 'loose',
+  flowchart: { curve: 'basis', htmlLabels: true, nodeSpacing: 45, rankSpacing: 55 },
+  sequence: { actorMargin: 42, boxMargin: 10, mirrorActors: false },
+  themeVariables: {
+    fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+    fontSize: '14px',
+    primaryColor: '#EEEDFE',
+    primaryTextColor: '#26215C',
+    primaryBorderColor: '#534AB7',
+    lineColor: '#5F6B7A',
+    secondaryColor: '#E1F5EE',
+    tertiaryColor: '#F1EFE8',
+    background: '#ffffff'
+  }
+});
+</script>
+
+</body>
+</html>

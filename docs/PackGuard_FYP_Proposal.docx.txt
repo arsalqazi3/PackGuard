@@ -1,0 +1,138 @@
+PackGuard
+AI-Assisted Multi-Layer Software Supply-Chain Defense Platform
+Final Year Project Proposal
+Session FALL 2026
+BS in Computer Science
+Department of Computer Science
+FAST School of Computing
+FAST National University, Karachi Campus
+7th September 2026
+
+Project Registration
+Project ID (for office use): _______________
+Type of project
+☒ Traditional   ☐ Industrial   ☐ Continuing   
+Nature of project
+☐ Development   ☒ Research & Development   ☐ Research   
+Sustainable Development Goals (SDGs)
+☐ Good Health and Well-Being   ☐ Quality Education   
+☒ Industry, Innovation, and Infrastructure   ☐ Gender Equality   
+☐ Decent Work and Economic Growth   ☐ Climate Action   
+Area of specialization
+☐ Artificial Intelligence (AI)   ☐ Data Science and Analytics   
+☐ Internet of Things (IoT)   ☐ Blockchain   
+☐ Mobile App Development   ☐ Web Development   ☒ Cybersecurity   
+☐ Game Development   ☐ Natural Language Processing (NLP)   ☐ Other   
+Project Group Members
+Declaration: FYP group members have cleared all prerequisite courses for FYP-I as per their degree requirements.
+
+1. Project Abstract
+Modern software development increasingly relies on AI coding assistants that generate installation commands and dependency recommendations. These assistants can hallucinate, producing package names that do not exist in any public registry. Attackers exploit this behaviour by registering malicious packages under these hallucinated names, an attack known as slopsquatting. Research by Spracklen et al. (USENIX Security 2025) found that package hallucination rates in code-generating large language models range from 5.2% to 21.7%, and a 2026 replication on newer frontier models found the threat persists even as rates compress. This project proposes PackGuard, a multi-layer software supply-chain defense platform designed specifically to detect and prevent this class of attack. PackGuard combines five connected layers: a Core Guard that verifies package names against real registries and flags suspicious naming patterns; an AI Risk Prediction layer that produces a calibrated risk score from package metadata and a cross-model consensus check, which flags package names that multiple independent AI models hallucinate identically; a Runtime Behavior Guard that executes uncertain packages inside an isolated sandbox and observes their actual behaviour; a Dependency and Provenance layer that records every package and every decision for later audit; and a Unified Decision Engine that converts all evidence into one action, allow, warn, quarantine, or block. The project builds on the MIT-licensed dataset released with the foundational USENIX study and on recent published research on Bayesian-calibrated hallucination detection, runtime behaviour mining, and supply-chain visibility. The expected contribution is a working, evaluated prototype that shows whether combining these layers of evidence improves detection over any single layer alone, together with measured precision, recall, and false-positive results on npm and PyPI packages.
+
+2. Introduction
+The research domain of this project is software supply-chain security, specifically the risk created by AI-assisted software development. As large language models become a standard part of the coding workflow, developers increasingly trust AI-generated installation commands without independently verifying that the suggested package actually exists. This trust creates a new and largely unaddressed attack surface.
+This domain is important because open-source package registries such as PyPI and npm allow almost anyone to register a package name with no review process. When an AI model hallucinates a package name, an attacker who identifies that name early can register it before a legitimate developer does, embedding malicious code that is then installed and executed by any developer who trusts the AI's suggestion. Because AI coding assistants are now used by a large share of professional developers, even a low hallucination rate translates into a large number of exposed installation events.
+The current situation is that this threat has only recently been characterised in the literature. Spracklen et al. (2025) provided the first large-scale measurement of the phenomenon, and later work by Churilov (2026) confirmed that although hallucination rates have fallen with newer frontier models, the threat has not disappeared, and a set of package names is hallucinated identically across multiple unrelated models. Existing commercial and open-source tools address general supply-chain risk but are not designed specifically around this AI-hallucination attack path, and no published tool checks whether multiple AI models independently hallucinate the same package name.
+Computational and AI-driven research is directly relevant here because the attack itself originates from an AI system's behaviour, and because detecting it well requires combining several different kinds of evidence, registry status, package metadata, behavioural observation, and cross-model comparison, which are best combined using calibrated statistical and machine-learning methods rather than a single fixed rule.
+
+3. Problem Statement
+The problem this project addresses is not the absence of package-scanning software; several such tools already exist. The gap is methodological and applied: no existing system is designed specifically around the AI-hallucination attack path, and no published tool or study evaluates whether checking multiple AI models for shared hallucinated package names improves detection of this specific threat.
+Existing detectors emit either a binary flag or a general-purpose risk score built from established malware and vulnerability signals; none combine a calibrated hallucination-specific score with post-installation behavioural evidence and cross-model consensus into a single, evaluated decision pipeline. This leaves an application gap: developers using AI coding assistants have no purpose-built defence against a documented, real-world attack pattern, and no empirical evidence yet exists on whether a multi-signal, AI-hallucination-focused approach outperforms simpler single-signal tools.
+Comparison with Existing Tools
+The table below summarises how PackGuard's planned capabilities compare against the closest existing tools, based on each tool's own documentation and published research.
+
+4. Motivation
+The motivation behind this project is to develop a practical, evaluated defence against a documented and growing security risk introduced by AI-assisted coding. The project aims to:
+Reduce the manual effort developers currently spend verifying whether an AI-suggested package is genuine.
+Improve the reliability of AI-assisted development workflows without requiring developers to change how they work.
+Automate the detection of hallucinated, suspicious, and behaviourally malicious packages before they reach a real project.
+Provide a clear, explained risk decision for every package, rather than a black-box allow or block.
+Improve on existing single-signal detection approaches by combining registry, metadata, behavioural, and cross-model evidence.
+Maintain a centralised, auditable record of every dependency decision made on a project.
+a. Aims and Objectives
+The aim of this project is to design and develop PackGuard, an AI-assisted multi-layer software supply-chain defence platform that protects AI-assisted development workflows from package hallucination, slopsquatting, and related dependency risks.
+The main objectives are:
+Develop an installation-time guard that intercepts or evaluates package installation requests before a package enters a project.
+Detect hallucinated, non-existent, suspicious, and typosquatted package names across the npm and PyPI registries.
+Combine package metadata, registry status, and a cross-model hallucination signal into a single calibrated risk score.
+Develop a machine-learning risk-prediction component and evaluate it against a rule-based baseline.
+Develop a controlled runtime-analysis component that observes selected package behaviour in an isolated sandbox.
+Construct a dependency and provenance record for security investigation and audit.
+Create a unified decision engine that converts evidence from all layers into an allow, warn, quarantine, or block action.
+Evaluate PackGuard against controlled benign, hallucinated, and malicious package scenarios, reporting precision, recall, and false-positive rate.
+b. Scope of the Project
+The scope of this project covers the npm and PyPI ecosystems, with the architecture designed to allow additional registries to be added later. The system will be integrated through a proxy-based or CLI installation workflow, with a CI/CD demonstration through GitHub Actions. Runtime analysis will be controlled and sandboxed rather than unrestricted, and will target packages flagged as uncertain by earlier layers rather than every package.
+The project includes building a cross-model hallucination lookup table from a curated prompt set, training and evaluating a machine-learning risk model, constructing a dependency and audit record, and building a decision engine and a reporting dashboard. Full production-scale deployment, support for registries beyond npm and PyPI, and unrestricted execution of arbitrary untrusted code are outside the scope of this project.
+
+5. Proposed Methodology
+The project will follow a staged, layer-by-layer methodology, so that each layer produces a working, testable component before the next layer is built on top of it:
+1. Requirement and threat modelling: define the threat scenarios, attacker goals, supported ecosystems, and the security decisions PackGuard must support.
+2. Dataset preparation: use the MIT-licensed dataset released with Spracklen et al. (2025) as the primary source of confirmed hallucinated package names, supplemented by live PyPI and npm metadata and the OpenSSF malicious-packages database.
+3. Core Guard development: implement registry verification, typosquat detection, and metadata analysis.
+4. Cross-model consensus construction: run a curated prompt set through multiple large language models, extract suggested package names, and record names hallucinated by more than one model.
+5. Risk scoring: implement a Bayesian-calibrated score combining the registry, metadata, and cross-model channels, following the two-channel design of Hillah et al. (2026).
+6. Machine-learning model development: engineer features from package metadata and train and compare candidate models against the rule-based baseline.
+7. Runtime analysis: build an isolated sandbox environment that executes flagged packages and records network, file, and process activity.
+8. Decision engine integration: combine evidence from all layers into a single allow, warn, quarantine, or block decision.
+9. Dependency and provenance recording: log every package, decision, and evidence trail for audit.
+10. Evaluation: measure detection rate, false-positive rate, and risk-ranking quality against controlled benign, hallucinated, and malicious package sets, comparing the full multi-layer system against single-layer baselines.
+
+6. System Architecture
+The proposed system follows a layered architecture, consistent with the Layered Architecture pattern, with the following layers:
+Presentation Layer
+A web dashboard, built with Next.js, that displays risk scores, decisions, and dependency information, together with a command-line or proxy interface that developers interact with directly during package installation.
+Application Layer
+The Core Guard, Risk Engine (rule-based and machine-learning scoring, including the cross-model consensus check), Runtime Guard, and Decision Engine, each implemented as a Python service exposed through a REST API built with FastAPI.
+Data Layer
+A PostgreSQL database storing package records, risk scores, decisions, the cross-model hallucination table, and the audit trail.
+Overall Workflow
+Developer or AI coding assistant issues an install request → Installation-time interception point → Core Guard → Risk Engine (registry, metadata, and cross-model evidence combined into a calibrated score) → Decision Engine → Allow / Warn / Quarantine-to-Runtime-Guard / Block → Provenance Store → Dashboard.
+Fig. 1. PackGuard system architecture and package evaluation workflow.
+UML Component Diagram
+The figure below shows PackGuard's application-layer components and the interfaces through which they communicate, following UML component notation.
+Fig. 2. UML component diagram of PackGuard's application-layer services.
+UML Deployment Diagram
+The figure below shows the physical and execution nodes PackGuard runs on, and the communication paths between them.
+Fig. 3. UML deployment diagram of PackGuard's runtime environment.
+
+Data Flow Diagram
+The figure below shows how data moves between external entities, PackGuard's internal processes, and its data stores, using Yourdon-DeMarco notation.
+Fig. 4. Level-1 data flow diagram of the PackGuard package evaluation process.
+
+7. Individual Tasks
+The tentative individual task breakdown for the three-member team is given below.
+Note: AI/ML and Dashboard role assignments between Ammar Hussain and M Asad Ur Rehman are a starting assumption; confirm and swap if the team splits work differently.
+
+8. Gantt Chart
+The chart below is built against the confirmed FYP-I weekly calendar (Fall 2026) for the first phase of the project, and a tentative continuation into FYP-II for the remaining layers. Bars in the same colour group that overlap in time run in parallel rather than in sequence; the dashed red lines mark the official evaluation milestones from the FYP calendar.
+
+Fig. 5. Project timeline across FYP-I and FYP-II, with official evaluation milestones.
+Work Breakdown Structure
+The diagram below decomposes the project into its seven major work packages, each broken down into the concrete tasks that make it up.
+Fig. 6. Work breakdown structure (WBS) for the PackGuard project.
+
+9. Tools and Technologies
+
+10. Expected Deliverables
+A working PackGuard prototype covering all five layers: Core Guard, AI Risk Prediction, Runtime Behavior Guard, Dependency and Provenance Visibility, and the Unified Decision Engine.
+A reusable package-security analysis service for the npm and PyPI ecosystems.
+A trained and evaluated machine-learning risk-prediction model, compared against a rule-based baseline.
+A cross-model hallucination lookup table built from a curated multi-model prompt corpus.
+A controlled runtime behaviour monitoring component.
+A dependency and provenance record with a full audit trail.
+A CLI/proxy integration and a CI/CD demonstration through GitHub Actions.
+A web dashboard presenting risk scores, decisions, and dependency information.
+An experimental evaluation reporting precision, recall, and false-positive rate, comparing PackGuard's combined multi-layer approach against single-layer baselines.
+
+11. References
+[1] J. Spracklen, R. Wijewickrama, A. H. M. N. Sakib, A. Maiti, B. Viswanath, and M. Jadliwala, "We have a package for you! A comprehensive analysis of package hallucinations by code-generating LLMs," in Proc. USENIX Security Symp., 2025.
+[2] A. Krishna, E. Galinkin, L. Derczynski, and J. Martin, "Importing phantoms: Measuring LLM package hallucination vulnerabilities," in Proc. 41st Int. Conf. Machine Learning (ICML), PMLR vol. 235, 2024.
+[3] A. Churilov, "The range shrinks, the threat remains: Re-evaluating LLM package hallucinations on the 2026 frontier-model cohort," arXiv:2605.17062, 2026.
+[4] L. M. Hillah, J.-M. Richard, and R. Hasnaoui, "Bayesian-calibrated detection of hallucinated package imports in AI-assisted code," arXiv:2606.13918, 2026.
+[5] Z. Tan, K. Xiao, J. Singer, and C. Anagnostopoulos, "Operational runtime behavior mining for open-source supply chain security," arXiv:2601.06948, 2026.
+[6] L. Schmid et al., "Software supply chain smells: Lightweight analysis for secure dependency management," arXiv:2603.24282, 2026.
+[7] S. Cofano, R. Williams, T. Sharma, and M. Monperrus, "Classport: Designing runtime dependency introspection for Java," arXiv:2510.20340, 2025.
+[8] "DySec: A machine learning-based dynamic analysis framework for malicious package detection in PyPI," arXiv:2503.00324, 2025. (Author list to be confirmed directly from the source before final submission.)
+[9] Socket, Inc., "Socket Firewall documentation." [Online]. Available: https://docs.socket.dev/docs/socket-firewall-overview
+[10] Google / OpenSSF, "OSV-Scanner and OpenSSF Malicious Packages repository." [Online]. Available: https://github.com/ossf/malicious-packages
+[11] J. Spracklen et al., "PackageHallucination: Code and data for the USENIX 2025 paper," GitHub repository, 2025. [Online]. Available: https://github.com/Spracks/PackageHallucination

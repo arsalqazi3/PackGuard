@@ -1,0 +1,97 @@
+PackGuard: FYP-I Work Plan
+Who does what, and when. For the team meeting on Monday 5 October 2026.
+Team: Arslan Asad (DevOps lead), Ammar Hussain (AI/ML), M Asad Ur Rehman Bin Usman (Core Guard checks and evidence)
+1. What we must deliver in the FYP-I final
+Two layers, working end to end:
+Core Guard (installation gateway): pip sends every package request through PackGuard first. PackGuard checks the package and either lets it through to PyPI or stops it.
+AI Risk Prediction (a solid first version, not the full layer): a trained XGBoost model plus a hallucination evidence lookup, compared against a simple rule-based baseline.
+In scope for FYP-I: gateway, existence check, typosquat check, metadata signals, hallucination evidence table, rule-based baseline, XGBoost model, simple allow/warn/block thresholds, saving decisions to Postgres, evaluation numbers.
+Left for FYP-II: score calibration, live cross-model checks on every install, detailed explainability, Runtime Guard, Provenance, dashboard.
+2. How we work in parallel
+The idea is simple. We agree on a few fixed "contracts" in this meeting. After that, each person builds their own part against those contracts and uses fake data until the real parts are ready. Nobody waits for anyone else.
+Arslan builds the gateway against a fake /evaluate that always says "allow".
+Ammar trains the model on saved metadata files. He does not need the gateway.
+Asad builds and tests the checks on a plain list of package names. He does not need the gateway either.
+In weeks 6 and 7 we plug the real parts together.
+3. Contracts to agree on in this meeting
+3.1 API between the gateway and the checks
+POST /evaluate
+request:  {"name": "flask-jwt-helper", "version": null}
+response: {"decision": "allow" | "warn" | "block",
+           "score": 0.87,
+           "reasons": ["not on PyPI", "found in AI hallucination list"],
+           "signals": {"exists": false, "typosquat_of": null, ...}}
+
+3.2 Feature list for the model (draft, to finalise)
+Exists on PyPI (yes/no)
+Package age in days, number of releases, days since last release
+Number of maintainers, has a homepage/repo link, has a description
+Download count (if available)
+Name distance to the closest popular package (typosquat signal)
+Found in the hallucination evidence table (yes/no, and how many models produced it)
+Name patterns, for example length and common AI-style suffixes like -helper, -utils, -py
+3.3 Database tables (Postgres)
+packages: name, exists, metadata snapshot, last checked
+evidence: name, source (Spracklen / Gemini / Groq), number of models that produced it
+decisions: name, decision, score, reasons, time
+3.4 Repo layout
+packguard/
+  gateway/      Arslan  (FastAPI index, pip routing, decision thresholds)
+  core_guard/   Asad    (existence, typosquat, metadata, baseline, evidence)
+  risk/         Ammar   (dataset, features, XGBoost, /score)
+  db/           Arslan  (schema, migrations)
+  tests/        everyone
+  docker-compose.yml, .github/workflows/
+
+4. Work split by person
+Arslan Asad (DevOps lead): gateway and integration
+Set up the repo, branch rules and GitHub Actions CI (lint + tests on every PR)
+Docker Compose with three services: gateway, API, Postgres
+FastAPI gateway that acts as pip's package index. Setup on the dev machine: pip config set global.index-url http://localhost:8000/simple
+Forward allowed requests to PyPI. Stop blocked ones with a clear error and log the reason
+Stub /evaluate in week 1 so the gateway can be built and tested right away
+Postgres schema and saving every decision
+Simple decision logic: score thresholds for allow / warn / block
+Wire everything together in weeks 6 and 7, and set up the demo environment
+Done when: A real "pip install requests" goes through the gateway and installs, a fake name is stopped, and every decision is saved in Postgres.
+Ammar Hussain (AI/ML): risk model
+Get the Spracklen dataset ready (GitHub repo plus the Zenodo corpus)
+Build the training set: real packages (popular PyPI packages) and hallucinated names (Spracklen labels)
+Fetch and save metadata for these names so training does not depend on live calls
+Write the feature extraction code from the agreed feature list
+Split the data into train and test, with a held-out test set that nobody else touches
+Train XGBoost from scratch and evaluate it: precision, recall, F1, false positive rate
+Expose the model as a /score function or endpoint that the gateway can call
+Show the top features behind each score as simple reasons
+Done when: The model gives a score for any package name, and we have a results table comparing it with the rule-based baseline on the held-out test set.
+M Asad Ur Rehman Bin Usman: Core Guard checks and evidence
+PyPI client using the PyPI JSON API (does the package exist, and fetch its metadata)
+Typosquat check: compare the name with a list of top PyPI packages using rapidfuzz
+Metadata signals: age, releases, maintainers, links
+Rule-based baseline score from these signals (this is what the ML model is compared against)
+AI-hallucination evidence table: Spracklen hallucinated names plus our own Gemini and Groq runs on the 240-prompt stress test set
+Build the evaluation test set of package names: normal, hallucinated, and typosquat
+Unit tests for every check
+Done when: Given any package name, the checks return correct signals and a baseline score, and the evidence table is loaded into Postgres.
+5. Week by week
+Assumes the FYP-I final is around mid-December. We will adjust once the exact date is confirmed.
+6. What the final demo must show
+"pip install requests" passes through PackGuard and installs normally
+pip install of a known hallucinated name is blocked, with the reason shown
+A typosquat like "reqeusts" is warned or blocked
+Every decision is visible in the database
+A results table: rule-based baseline vs XGBoost (precision, recall, F1, false positive rate)
+7. Team rules
+Everyone works on their own branch and merges through a PR. CI must pass before merging.
+Nobody changes a contract (API, features, tables) without telling the other two first.
+Weekly check-in (15 minutes): what got merged, what is next, who is blocked.
+If someone is blocked for more than 2 days, they say so in the group right away.
+Held-out test set: the test names must not appear in the training data or in the evidence table. Otherwise the lookup simply "finds" the test names and our results look better than they really are. The jury can catch this.
+Each person writes the report section for their own part.
+8. To decide in the meeting
+Exact date of the FYP-I final (and any mid evaluation)
+Day and time for the weekly check-in
+Final version of the API response, feature list and tables
+How many top PyPI packages to use for the typosquat list (for example the top 5,000)
+Who holds the Gemini and Groq API keys, and how we share them safely (.env file, never committed to Git)
+Where the demo runs: local Docker Compose or EC2

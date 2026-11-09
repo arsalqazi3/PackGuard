@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PackGuard — Project Status & Completion Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.025em;
+    }
+    .badge-done { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-pending { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-roadmap { background: rgba(139, 92, 246, 0.18); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.4); }
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover {
+      border-color: #475569;
+      transform: translateY(-2px);
+    }
+    .filter-btn.active {
+      background-color: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 text-slate-100">
+
+  <div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- HEADER -->
+    <header class="border-b border-slate-700/80 pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </span>
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
+              PackGuard Status Dashboard
+            </h1>
+            <p class="text-sm text-slate-400">
+              AI-Assisted Multi-Layer Software Supply-Chain Defense Platform · FYP 2026–2027 (FAST-NUCES)
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3 self-start md:self-auto">
+        <div class="bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-right">
+          <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">FYP-I Overall Progress</div>
+          <div class="text-2xl font-black text-emerald-400 flex items-center justify-end gap-1.5">
+            <span>94%</span>
+            <span class="text-xs font-normal text-slate-400">ready</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- TOP SUMMARY STATS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1 -->
+      <div class="metric-card rounded-xl p-5">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Layer 1: Core Guard</span>
+          <span class="badge badge-done">100% Done</span>
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">Checks & Rules</div>
+        <p class="text-xs text-slate-400 mb-3">PyPI existence, metadata, typosquats (top 5k), OSV malware</p>
+        <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-emerald-400 h-1.5 rounded-full" style="width: 100%"></div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
+          <span>Lead: Asad</span>
+          <span>4 / 4 checks ready</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="metric-card rounded-xl p-5">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Layer 2: AI Risk Model</span>
+          <span class="badge badge-done">92% Done</span>
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">XGBoost & SHAP</div>
+        <p class="text-xs text-slate-400 mb-3">16 signals, 4,041 package dataset, offline cache, SHAP XAI</p>
+        <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-emerald-400 h-1.5 rounded-full" style="width: 92%"></div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
+          <span>Lead: Ammar</span>
+          <span>F1: 94.8% vs Baseline 83.2%</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="metric-card rounded-xl p-5">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Layer 1 Proxy & DB</span>
+          <span class="badge badge-done">92% Done</span>
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">Gateway API</div>
+        <p class="text-xs text-slate-400 mb-3">FastAPI proxy `/simple/`, evaluate endpoint, Postgres 16</p>
+        <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-emerald-400 h-1.5 rounded-full" style="width: 92%"></div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
+          <span>Lead: Arslan</span>
+          <span>Docker + CI active</span>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="metric-card rounded-xl p-5">
+        <div class="flex justify-between items-start mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">FYP-II Roadmap</span>
+          <span class="badge badge-roadmap">Planned</span>
+        </div>
+        <div class="text-2xl font-bold text-white mb-1">Runtime & UI</div>
+        <p class="text-xs text-slate-400 mb-3">Sandbox execution guard, audit web dashboard, live LLMs</p>
+        <div class="w-full bg-slate-700/60 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-purple-400 h-1.5 rounded-full" style="width: 10%"></div>
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 flex justify-between">
+          <span>Scope: FYP-II</span>
+          <span>Spring 2027</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PERFORMANCE COMPARISON HIGHLIGHT -->
+    <section class="bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 rounded-xl p-6 shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+            </svg>
+            Held-Out Test Set Evaluation: Baseline vs. PackGuard XGBoost
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Evaluated on 608 unseen packages (Spracklen Hallucination dataset + Real PyPI packages)</p>
+        </div>
+        <span class="text-xs px-3 py-1 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-md">
+          Verified in <code>risk/saved_models/evaluation_results.csv</code>
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Accuracy</div>
+          <div class="text-xl sm:text-2xl font-extrabold text-white mt-1">94.73%</div>
+          <div class="text-xs text-emerald-400 mt-0.5">+9.39% over baseline</div>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60">
+          <div class="text-xs text-slate-400 uppercase font-semibold">Recall (Catch Rate)</div>
+          <div class="text-xl sm:text-2xl font-extrabold text-emerald-400 mt-1">94.48%</div>
+          <div class="text-xs text-emerald-400 mt-0.5">+22.73% over baseline (71.7%)</div>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60">
+          <div class="text-xs text-slate-400 uppercase font-semibold">F1-Score</div>
+          <div class="text-xl sm:text-2xl font-extrabold text-white mt-1">94.79%</div>
+          <div class="text-xs text-emerald-400 mt-0.5">+11.55% improvement</div>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60">
+          <div class="text-xs text-slate-400 uppercase font-semibold">ROC-AUC</div>
+          <div class="text-xl sm:text-2xl font-extrabold text-blue-400 mt-1">0.9891</div>
+          <div class="text-xs text-slate-400 mt-0.5">Near-optimal separation</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE FILTER CONTROLS -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xs uppercase tracking-wider text-slate-400 font-bold mr-1">Filter View:</span>
+        <button onclick="filterTasks('all')" class="filter-btn active text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">All Items (20)</button>
+        <button onclick="filterTasks('done')" class="filter-btn text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">Completed (15)</button>
+        <button onclick="filterTasks('pending')" class="filter-btn text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">Remaining / In-Progress (2)</button>
+        <button onclick="filterTasks('roadmap')" class="filter-btn text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white transition">FYP-II Scope (3)</button>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        Showing <span id="count-display" class="font-bold text-white">20</span> items
+      </div>
+    </div>
+
+    <!-- MAIN TASK CARDS LIST -->
+    <div class="space-y-4" id="tasks-container">
+
+      <!-- ITEM 1 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">FastAPI pip Gateway Proxy</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Intercepts <code>GET /simple/{name}/</code> and evaluates incoming package requests. Allows clean packages, blocks malicious ones with HTTP 403 before download.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">gateway/main.py</span>
+            <span class="text-emerald-400 font-semibold">Arslan</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 2 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Multi-Signal Decision Evaluator</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Takes the higher of rule-based baseline and AI model score (<code>max(baseline, model)</code>) and enforces allow / warn / block thresholds with clear reasons.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">gateway/evaluate.py</span>
+            <span class="text-emerald-400 font-semibold">Arslan & Asad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 3 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">PostgreSQL 16 Schema & Pooling</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Caches PyPI lookups (<code>packages</code> table) with 24h TTL and logs every evaluation into <code>decisions</code> with full audit trail and signals.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">db/schema.sql & gateway/db.py</span>
+            <span class="text-emerald-400 font-semibold">Arslan</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 4 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Core Guard: PyPI Existence & Metadata Checks</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Validates PyPI 200 vs 404, parses upload history, first/latest release dates, package age, repository links, author, and yanked status.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">core_guard/checks.py</span>
+            <span class="text-emerald-400 font-semibold">Asad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 5 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Core Guard: Typosquatting Engine (Top 5,000 PyPI)</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              RapidFuzz Levenshtein distance check against curated top 5,000 PyPI packages to catch subtle typo attacks like <code>reqeusts</code>.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">core_guard/data/top_packages.txt</span>
+            <span class="text-emerald-400 font-semibold">Asad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 6 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Core Guard: OSV & OpenSSF Malicious Package Check</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Live queries against OSV.dev database to identify existing CVEs, GHSAs, and OpenSSF malware advisory entries with short timeout fallback.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">core_guard/checks.py</span>
+            <span class="text-emerald-400 font-semibold">Asad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 7 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">16-Signal Feature Engineering Pipeline</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Extracts Shannon entropy, character lengths, AI affix matching (<code>helper</code>, <code>utils</code>, <code>client</code>), edit distances, age, releases, and repository URLs.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/features/pipeline.py</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 8 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">SQLite Metadata Cache & 500k Offline Index</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Local SQLite database with 0.1ms lookup time plus offline index of 500,566 packages to allow instant training and testing without rate limits.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/dataset/pypi_cache.py</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 9 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Curated Ground Truth Dataset (4,041 Packages)</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Cleanly split into 70% Train (2,827), 15% Validation (606), and 15% strictly Held-Out Test Set (608) with balanced safe vs slopsquatting packages.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/data/ground_truth/</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 10 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">XGBoost Risk Model Training & Persistence</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Trained gradient-boosted tree model saved in <code>packguard_xgboost.joblib</code> and <code>.json</code> achieving 94.79% F1 and 0.9891 ROC-AUC.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/saved_models/</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 11 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">SHAP Explainability (XAI) Engine</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Integrates TreeSHAP to decompose model predictions into intuitive human-readable risk contributions (e.g. "high name entropy", "no repository link").
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/explainability/</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 12 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Interactive Terminal CLI Demo</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Command-line interface accepting any package name, computing scores live, displaying ALLOW / WARN / BLOCK badges and top SHAP reasons.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">cli_demo.py</span>
+            <span class="text-emerald-400 font-semibold">Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 13 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Comprehensive Pytest Suite</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Covers core checks (<code>test_core_guard.py</code>), gateway proxy (<code>test_gateway.py</code>), database pool (<code>test_db.py</code>), and AI features (<code>test_risk.py</code>).
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">tests/</span>
+            <span class="text-emerald-400 font-semibold">Whole Team</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 14 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">CI/CD & Container Orchestration</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              GitHub Actions automated workflow with Postgres 16 service container + <code>docker-compose.yml</code> for local gateway and DB startup.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">.github/workflows/ci.yml</span>
+            <span class="text-emerald-400 font-semibold">Arslan</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ITEM 15 -->
+      <div class="task-item metric-card rounded-xl p-5" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-white">Threat Model & Technical Documentation</h3>
+              <span class="badge badge-done">Completed</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Full T1-T16 threat coverage analysis (<code>threat-model.md</code>), HTML system diagrams, and detailed bilingual technical guide.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">docs/</span>
+            <span class="text-emerald-400 font-semibold">Arslan & Ammar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING 1 -->
+      <div class="task-item metric-card rounded-xl p-5 border-emerald-500/40" data-status="done">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <h3 class="text-base font-semibold text-emerald-200">AI Hallucination Evidence Harvesting (Live LLMs + Benchmark)</h3>
+              <span class="badge badge-done">Completed (2,305 records)</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Live Groq LLM harvesting verified (caught real hallucinations like <code>stripe-async</code> and <code>tckimlik</code>). Ingested 2,305 total unique evidence records into <code>harvested_evidence.json</code> & <code>.csv</code> with zero test set leakage.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">risk/data/harvested_evidence.csv</span>
+            <span class="text-emerald-400 font-semibold">2,305 Records</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PENDING 2 -->
+      <div class="task-item metric-card rounded-xl p-5 border-amber-500/40" data-status="pending">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-amber-400 font-bold">⏳</span>
+              <h3 class="text-base font-semibold text-amber-200">Codebase Folder Unification (risk vs packguard/risk)</h3>
+              <span class="badge badge-pending">In Progress</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Resolve redundant file copies across <code>risk/</code> and <code>packguard/risk/</code>. Standardize root package exports so imports are uniform across tests and CLI.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">Code Refactor</span>
+            <span class="text-amber-400 font-semibold">Priority 2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROADMAP 1 -->
+      <div class="task-item metric-card rounded-xl p-5 opacity-80" data-status="roadmap">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-purple-400 font-bold">◈</span>
+              <h3 class="text-base font-semibold text-purple-200">Layer 3: Runtime Guard Dynamic Sandbox</h3>
+              <span class="badge badge-roadmap">FYP-II</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Isolated microVM / gVisor container sandbox executing install scripts (<code>setup.py</code>) to intercept unauthorized socket connections and file modifications.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">FYP-II Planned</span>
+            <span class="text-purple-400 font-semibold">Spring 2027</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROADMAP 2 -->
+      <div class="task-item metric-card rounded-xl p-5 opacity-80" data-status="roadmap">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-purple-400 font-bold">◈</span>
+              <h3 class="text-base font-semibold text-purple-200">Layer 4: Web Management & Audit Dashboard</h3>
+              <span class="badge badge-roadmap">FYP-II</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              React/Next.js dashboard to inspect live package streams, examine organization dependency trees, configure threshold policies, and review audit logs.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">FYP-II Planned</span>
+            <span class="text-purple-400 font-semibold">Spring 2027</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROADMAP 3 -->
+      <div class="task-item metric-card rounded-xl p-5 opacity-80" data-status="roadmap">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2.5">
+              <span class="text-purple-400 font-bold">◈</span>
+              <h3 class="text-base font-semibold text-purple-200">Layer 5: Live Multi-LLM Consensus on Uncertain Requests</h3>
+              <span class="badge badge-roadmap">FYP-II</span>
+            </div>
+            <p class="text-xs text-slate-400">
+              Real-time asynchronous polling of Gemini, Claude, and Groq when a package falls in the "Warn" threshold (0.50–0.79) to confirm whether it is an emerging hallucination.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs text-slate-400 shrink-0">
+            <span class="px-2.5 py-1 bg-slate-800 rounded border border-slate-700">FYP-II Planned</span>
+            <span class="text-purple-400 font-semibold">Spring 2027</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- WHERE WE STAND RIGHT NOW / NEXT STEPS -->
+    <section class="metric-card rounded-xl p-6 border-slate-700 bg-slate-800/40">
+      <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        Where We Stand Right Now (Immediate Action Plan)
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+        <div class="p-3.5 bg-slate-900/60 rounded-lg border border-slate-700/80">
+          <div class="font-bold text-white mb-1">1. FYP-I Milestone Status</div>
+          <p class="text-slate-400 leading-relaxed">
+            The core deliverables for FYP-I are <strong>functional and verified</strong>. Gateway intercepts requests, checks run, the trained XGBoost model scores packages with SHAP explanations, and decisions are logged in Postgres.
+          </p>
+        </div>
+        <div class="p-3.5 bg-slate-900/60 rounded-lg border border-slate-700/80">
+          <div class="font-bold text-emerald-300 mb-1">2. Evidence Harvester Ready</div>
+          <p class="text-slate-400 leading-relaxed">
+            Gemini & Groq keys configured in <code>.env</code>. Run <code>python -m risk.collect_evidence</code> to harvest live hallucinations directly into your evidence dataset!
+          </p>
+        </div>
+        <div class="p-3.5 bg-slate-900/60 rounded-lg border border-slate-700/80">
+          <div class="font-bold text-emerald-300 mb-1">3. Demo Readiness</div>
+          <p class="text-slate-400 leading-relaxed">
+            You are ready to run:
+            <code class="block text-emerald-400 bg-slate-950 p-1.5 rounded mt-1">python cli_demo.py requests</code>
+            and show real-time SHAP analysis and evaluation metrics to your supervisor!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="pt-4 pb-8 border-t border-slate-800 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div>PackGuard FYP Team: Arslan Asad · M. Asad Ur Rehman · Ammar Hussain</div>
+      <div>FAST-NUCES Karachi Campus</div>
+    </footer>
+
+  </div>
+
+  <script>
+    function filterTasks(status) {
+      const items = document.querySelectorAll('.task-item');
+      const buttons = document.querySelectorAll('.filter-btn');
+      
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      let visible = 0;
+      items.forEach(item => {
+        if (status === 'all' || item.getAttribute('data-status') === status) {
+          item.style.display = 'block';
+          visible++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      document.getElementById('count-display').textContent = visible;
+    }
+  </script>
+
+</body>
+</html>
+

@@ -10,6 +10,7 @@ import re
 import threading
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 import httpx
 from rapidfuzz import process
@@ -31,8 +32,19 @@ REPO_HOSTS = ("github.com", "gitlab.com", "bitbucket.org", "codeberg.org", "sr.h
 NEW_PACKAGE_DAYS = 30
 
 
+TOP_PACKAGES_FILE = Path(__file__).resolve().parent / "data" / "top_packages.txt"
+
+
 def _normalize(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def load_top_packages(path: Path = TOP_PACKAGES_FILE) -> list[str]:
+    """The popular packages list: one name per line, lines starting with # are ignored."""
+    if not path.exists():
+        return []
+    lines = path.read_text(encoding="utf-8").splitlines()
+    return [line.strip() for line in lines if line.strip() and not line.startswith("#")]
 
 
 def _cached(kind: str, name: str, fetch):
@@ -79,8 +91,8 @@ def metadata(name: str) -> dict:
     """Facts about the package from the PyPI JSON API. All values are JSON safe.
 
     Keys: releases, first_upload, latest_upload (ISO strings or None),
-    has_repository, repository_url, author, summary, description_length,
-    yanked_releases.
+    has_repository, repository_url, has_documentation, author, summary,
+    description_length, yanked_releases.
     """
     data = _pypi_json(name)
     if data is None:
@@ -101,6 +113,10 @@ def metadata(name: str) -> dict:
 
     urls = [info.get("home_page") or ""] + list((info.get("project_urls") or {}).values())
     repo = next((u for u in urls if u and any(h in u.lower() for h in REPO_HOSTS)), None)
+    has_docs = any(
+        "doc" in label.lower() or "readthedocs" in (url or "").lower()
+        for label, url in (info.get("project_urls") or {}).items()
+    )
 
     return {
         "releases": releases,
@@ -109,6 +125,7 @@ def metadata(name: str) -> dict:
         "latest_upload": uploads[-1] if uploads else None,
         "has_repository": repo is not None,
         "repository_url": repo,
+        "has_documentation": has_docs,
         "author": info.get("author") or info.get("author_email") or None,
         "summary": info.get("summary") or "",
         "description_length": len(info.get("description") or ""),

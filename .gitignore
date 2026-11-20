@@ -9,8 +9,8 @@ node_modules/
 
 # data and models
 risk/data/raw/
-risk/models/*
-!risk/models/.gitkeep
+risk/data/cache/
+Zenodo dataset/
 *.pkl
 *.joblib
 *.ubj

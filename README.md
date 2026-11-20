@@ -62,6 +62,21 @@ PyPI lookups are cached in the `packages` table for `PACKAGE_CACHE_TTL_HOURS` (d
 
 The `/simple/` responses also carry `X-PackGuard-Decision` and `X-PackGuard-Score` headers. See `docs/threat-model.md` for what PackGuard does and does not protect against.
 
+## The AI risk model
+
+The gateway loads the model from `risk/saved_models/packguard_xgboost.json`. Features are built from the gateway's signals by `risk/features/pipeline.py`, for both training and live scoring, so the two always match. `risk.model.score()` returns only a number and the gateway decides what it means, using the thresholds above.
+
+The saved model is a first version trained on generated names, so its numbers do not measure real attacks yet.
+
+To train again, which needs internet access and takes a while:
+
+```bash
+pip install -r requirements-train.txt
+python -m risk.train
+```
+
+Signals are cached in `risk/data/cache/` (git ignored), so a rerun only fetches what is missing. To try the full logic on any package, run `python cli_demo.py requests reqeusts`.
+
 ## The /evaluate contract
 
 Request:

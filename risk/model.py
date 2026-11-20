@@ -9,25 +9,49 @@ Plan:
    and never used to build the evidence table.
 3. Extract features from the Core Guard signals (see extract_features).
 4. Train an XGBoost model from scratch on the training split only.
-   Save trained models in risk/models/ (model files are git ignored).
+   The gateway loads the model from risk/saved_models/packguard_xgboost.json.
 5. Evaluate on the held-out test set: precision, recall, F1 and false
    positive rate, compared against core_guard.checks.baseline_score.
 """
+import threading
+
+from risk.features.pipeline import extract_features
+
+_engine = None
+_engine_lock = threading.Lock()
 
 
-def extract_features(signals: dict) -> dict:
-    """Turn Core Guard signals into a flat dict of numeric features.
+def _load():
+    """Load the model once, on first use, so importing this module stays fast."""
+    global _engine
+    with _engine_lock:
+        if _engine is None:
+            from risk.explainability.explainer import RiskExplainer
+            from risk.models.xgboost_model import PackGuardXGBoostModel
 
-    `signals` uses the keys listed in gateway/contracts.py. Feature ideas:
-    exists_on_pypi, package age in days, number of releases, has repository URL,
-    number of typosquat matches, known_malicious, number of vulnerabilities,
-    and from signals["hallucination_evidence"]: total count and the number of
-    distinct models (cross-model agreement, the AI-specific signal from the proposal).
-    Keep this the same for training and for live scoring.
+            loaded = PackGuardXGBoostModel.load()
+            _engine = (loaded, RiskExplainer(loaded))
+    return _engine
+
+
+def score(signals: dict) -> float | None:
+    """Return a risk score between 0 and 1 (1 = risky) from the trained model.
+
+    Returns None when the signals are incomplete, so the gateway uses the rule
+    based baseline alone. Real errors are not caught here, the gateway reports
+    them in signals["errors"].
     """
-    raise NotImplementedError
+    features = extract_features(signals)
+    if features is None:
+        return None
+    risk_model, _ = _load()
+    return risk_model.score_single(features)
 
 
-def score(signals: dict) -> float:
-    """Return a risk score between 0 and 1 (1 = risky) from the trained model."""
-    raise NotImplementedError
+def explain(signals: dict) -> list[str]:
+    """Return the top reasons, from TreeSHAP, why the model raised the score."""
+    features = extract_features(signals)
+    if features is None:
+        return []
+    _, explainer = _load()
+    return explainer.explain_single(features)
